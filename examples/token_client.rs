@@ -1,15 +1,7 @@
-use tokio;
-use pretty_env_logger;
 use argparse::{ArgumentParser, Store, StoreOption, StoreTrue};
 use std::fs::File;
 
-use a2::{
-    Client,
-    Endpoint,
-    NotificationBuilder,
-    NotificationOptions,
-    PlainNotificationBuilder,
-};
+use a2::{Client, Endpoint, NotificationBuilder, NotificationOptions, PlainNotificationBuilder};
 
 // An example client connectiong to APNs with a JWT token
 #[tokio::main]
@@ -64,7 +56,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     let client = Client::token(&mut private_key, key_id, team_id, endpoint).unwrap();
 
     let options = NotificationOptions {
-        apns_topic: topic.as_ref().map(|s| &**s),
+        apns_topic: topic.as_deref(),
         ..Default::default()
     };
 

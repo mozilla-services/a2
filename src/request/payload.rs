@@ -1,10 +1,10 @@
 //! Payload with `aps` and custom data
 
-use crate::request::notification::{LocalizedAlert, NotificationOptions};
 use crate::error::Error;
+use crate::request::notification::{LocalizedAlert, NotificationOptions};
+use erased_serde::Serialize;
 use serde_json::{self, Value};
 use std::collections::BTreeMap;
-use erased_serde::Serialize;
 
 /// The data and options for a push notification.
 #[derive(Debug, Clone)]
@@ -74,8 +74,7 @@ impl<'a> Payload<'a> {
         root_key: &'a str,
         data: &dyn Serialize,
     ) -> Result<&mut Self, Error>
-    where
-    {
+where {
         self.data.insert(root_key, serde_json::to_value(data)?);
 
         Ok(self)

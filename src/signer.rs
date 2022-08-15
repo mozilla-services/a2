@@ -1,13 +1,15 @@
-use std::io::Read;
-use serde_json;
-use base64::encode;
 use crate::error::Error;
-use std::{sync::RwLock, time::{Duration, SystemTime, UNIX_EPOCH}};
+use base64::encode;
+use std::io::Read;
+use std::{
+    sync::RwLock,
+    time::{Duration, SystemTime, UNIX_EPOCH},
+};
 
 use openssl::{
     ec::EcKey,
-    pkey::{PKey, Private},
     hash::MessageDigest,
+    pkey::{PKey, Private},
     sign::Signer as SslSigner,
 };
 
@@ -71,14 +73,14 @@ impl Signer {
 
         let signature = RwLock::new(Signature {
             key: Self::create_signature(&secret, &key_id, &team_id, issued_at)?,
-            issued_at: issued_at,
+            issued_at,
         });
 
         let signer = Signer {
-            signature: signature,
-            key_id: key_id,
-            team_id: team_id,
-            secret: secret,
+            signature,
+            key_id,
+            team_id,
+            secret,
             expire_after_s: signature_ttl,
         };
 
@@ -150,7 +152,7 @@ impl Signer {
 
         *signature = Signature {
             key: Self::create_signature(&self.secret, &self.key_id, &self.team_id, issued_at)?,
-            issued_at: issued_at,
+            issued_at,
         };
 
         Ok(())
@@ -174,7 +176,7 @@ fn get_time() -> i64 {
 mod tests {
     use super::*;
 
-    const PRIVATE_KEY: &'static str = indoc!(
+    const PRIVATE_KEY: &str = indoc!(
         "-----BEGIN PRIVATE KEY-----
         MIGHAgEAMBMGByqGSM49AgEGCCqGSM49AwEHBG0wawIBAQQg8g/n6j9roKvnUkwu
         lCEIvbDqlUhA5FOzcakkG90E8L+hRANCAATKS2ZExEybUvchRDuKBftotMwVEus3
@@ -184,7 +186,13 @@ mod tests {
 
     #[test]
     fn test_signature_caching() {
-        let signer = Signer::new(PRIVATE_KEY.as_bytes(), "89AFRD1X22", "ASDFQWERTY", Duration::from_secs(100)).unwrap();
+        let signer = Signer::new(
+            PRIVATE_KEY.as_bytes(),
+            "89AFRD1X22",
+            "ASDFQWERTY",
+            Duration::from_secs(100),
+        )
+        .unwrap();
 
         let mut sig1 = String::new();
         signer.with_signature(|sig| sig1.push_str(sig)).unwrap();
@@ -197,7 +205,13 @@ mod tests {
 
     #[test]
     fn test_signature_without_caching() {
-        let signer = Signer::new(PRIVATE_KEY.as_bytes(), "89AFRD1X22", "ASDFQWERTY", Duration::from_secs(0)).unwrap();
+        let signer = Signer::new(
+            PRIVATE_KEY.as_bytes(),
+            "89AFRD1X22",
+            "ASDFQWERTY",
+            Duration::from_secs(0),
+        )
+        .unwrap();
 
         let mut sig1 = String::new();
         signer.with_signature(|sig| sig1.push_str(sig)).unwrap();

@@ -30,6 +30,14 @@ pub struct SilentNotificationBuilder {
     content_available: u8,
 }
 
+impl Default for SilentNotificationBuilder {
+    fn default() -> Self {
+        Self {
+            content_available: 1,
+        }
+    }
+}
+
 impl SilentNotificationBuilder {
     /// Creates a new builder.
     ///
@@ -46,15 +54,12 @@ impl SilentNotificationBuilder {
     /// # }
     /// ```
     pub fn new() -> SilentNotificationBuilder {
-        SilentNotificationBuilder {
-            content_available: 1,
-        }
+        Self::default()
     }
 }
 
 impl<'a> NotificationBuilder<'a> for SilentNotificationBuilder {
-    fn build(self, device_token: &'a str, options: NotificationOptions<'a>) -> Payload<'a>
-    {
+    fn build(self, device_token: &'a str, options: NotificationOptions<'a>) -> Payload<'a> {
         Payload {
             aps: APS {
                 alert: None,
@@ -64,8 +69,8 @@ impl<'a> NotificationBuilder<'a> for SilentNotificationBuilder {
                 category: None,
                 mutable_content: None,
             },
-            device_token: device_token,
-            options: options,
+            device_token,
+            options,
             data: BTreeMap::new(),
         }
     }
@@ -87,7 +92,8 @@ mod tests {
             "aps": {
                 "content-available": 1
             }
-        }).to_string();
+        })
+        .to_string();
 
         assert_eq!(expected_payload, payload);
     }
@@ -131,7 +137,8 @@ mod tests {
                     "nothing": "here"
                 }
             }
-        }).to_string();
+        })
+        .to_string();
 
         assert_eq!(expected_payload, payload.to_json_string().unwrap());
     }
@@ -155,7 +162,8 @@ mod tests {
                 "key_str": "foo",
                 "key_str2": "bar"
             }
-        }).to_string();
+        })
+        .to_string();
 
         assert_eq!(expected_payload, payload.to_json_string().unwrap());
     }
