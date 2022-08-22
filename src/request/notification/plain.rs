@@ -120,6 +120,7 @@ impl<'a> NotificationBuilder<'a> for PlainNotificationBuilder<'a> {
                 content_available: None,
                 category: self.category,
                 mutable_content: None,
+                url_args: None,
             },
             device_token,
             options,
@@ -196,8 +197,7 @@ mod tests {
             key_struct: SubData { nothing: "here" },
         };
 
-        let mut payload =
-            PlainNotificationBuilder::new("kulli").build("device-token", Default::default());
+        let mut payload = PlainNotificationBuilder::new("kulli").build("device-token", Default::default());
 
         payload.add_custom_data("custom", &test_data).unwrap();
 

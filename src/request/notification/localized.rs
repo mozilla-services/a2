@@ -68,16 +68,23 @@ impl<'a> LocalizedNotificationBuilder<'a> {
     ///
     /// ```rust
     /// # use a2::request::notification::{LocalizedNotificationBuilder, NotificationBuilder};
-    /// let payload = LocalizedNotificationBuilder::new()
+    /// let payload = LocalizedNotificationBuilder::new("a title", "a body")
     ///     .build("token", Default::default());
     ///
     /// assert_eq!(
-    ///     "{\"aps\":{\"alert\":{},\"mutable-content\":0}}",
+    ///     "{\"aps\":{\"alert\":{\"body\":\"a body\", \"title\":\"a title\"},\"mutable-content\":0}}",
     ///     &payload.to_json_string().unwrap()
     /// );
     /// ```
-    pub fn new() -> LocalizedNotificationBuilder<'a> {
-        Self::default()
+    pub fn new(title: &'a str, body: &'a str) -> LocalizedNotificationBuilder<'a> {
+        LocalizedNotificationBuilder {
+            alert: LocalizedAlert {
+                title: Some(title),
+                body: Some(body),
+                ..Default::default()
+            },
+            ..Default::default()
+        }
     }
 
     /// Set the title
@@ -318,6 +325,7 @@ impl<'a> NotificationBuilder<'a> for LocalizedNotificationBuilder<'a> {
                 content_available: None,
                 category: self.category,
                 mutable_content: Some(self.mutable_content),
+                url_args: None,
             },
             device_token,
             options,
@@ -332,8 +340,7 @@ mod tests {
 
     #[test]
     fn test_localized_notification_with_minimal_required_values() {
-        let mut builder = LocalizedNotificationBuilder::new();
-        builder.set_title("the title").set_body("the body");
+        let builder = LocalizedNotificationBuilder::new("the title", "the body");
         let payload = builder
             .build("device-token", Default::default())
             .to_json_string()
@@ -355,7 +362,7 @@ mod tests {
 
     #[test]
     fn test_localized_notification_with_full_data() {
-        let mut builder = LocalizedNotificationBuilder::new();
+        let mut builder = LocalizedNotificationBuilder::default();
 
         builder.set_title("the title");
         builder.set_body("the body");
@@ -421,8 +428,7 @@ mod tests {
             key_struct: SubData { nothing: "here" },
         };
 
-        let mut builder = LocalizedNotificationBuilder::new();
-        builder.set_title("the title").set_body("the body");
+        let builder = LocalizedNotificationBuilder::new("the title", "the body");
         let mut payload = builder.build("device-token", Default::default());
 
         payload.add_custom_data("custom", &test_data).unwrap();

@@ -49,12 +49,7 @@ struct JwtPayload<'a> {
 impl Signer {
     /// Creates a signer with a pkcs8 private key, APNs key id and team id.
     /// Can fail if the key is not valid or there is a problem with system OpenSSL.
-    pub fn new<S, T, R>(
-        mut pk_pem: R,
-        key_id: S,
-        team_id: T,
-        signature_ttl: Duration,
-    ) -> Result<Signer, Error>
+    pub fn new<S, T, R>(mut pk_pem: R, key_id: S, team_id: T, signature_ttl: Duration) -> Result<Signer, Error>
     where
         S: Into<String>,
         T: Into<String>,
@@ -109,12 +104,7 @@ impl Signer {
         Ok(f(&signature.key))
     }
 
-    fn create_signature(
-        secret: &PKey<Private>,
-        key_id: &str,
-        team_id: &str,
-        issued_at: i64,
-    ) -> Result<String, Error> {
+    fn create_signature(secret: &PKey<Private>, key_id: &str, team_id: &str, issued_at: i64) -> Result<String, Error> {
         let headers = JwtHeader {
             alg: JwtAlg::ES256,
             kid: key_id,

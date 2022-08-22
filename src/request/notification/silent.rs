@@ -32,9 +32,7 @@ pub struct SilentNotificationBuilder {
 
 impl Default for SilentNotificationBuilder {
     fn default() -> Self {
-        Self {
-            content_available: 1,
-        }
+        Self { content_available: 1 }
     }
 }
 
@@ -68,6 +66,7 @@ impl<'a> NotificationBuilder<'a> for SilentNotificationBuilder {
                 content_available: Some(self.content_available),
                 category: None,
                 mutable_content: None,
+                url_args: None,
             },
             device_token,
             options,
@@ -120,8 +119,7 @@ mod tests {
             key_struct: SubData { nothing: "here" },
         };
 
-        let mut payload =
-            SilentNotificationBuilder::new().build("device-token", Default::default());
+        let mut payload = SilentNotificationBuilder::new().build("device-token", Default::default());
 
         payload.add_custom_data("custom", &test_data).unwrap();
 
@@ -149,8 +147,7 @@ mod tests {
         test_data.insert("key_str", "foo");
         test_data.insert("key_str2", "bar");
 
-        let mut payload =
-            SilentNotificationBuilder::new().build("device-token", Default::default());
+        let mut payload = SilentNotificationBuilder::new().build("device-token", Default::default());
 
         payload.add_custom_data("custom", &test_data).unwrap();
 

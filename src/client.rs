@@ -7,7 +7,6 @@ use hyper_alpn::AlpnConnector;
 
 use crate::request::payload::Payload;
 use crate::response::Response;
-use futures::stream::StreamExt;
 use http::header::{AUTHORIZATION, CONTENT_LENGTH, CONTENT_TYPE};
 use hyper::{self, Body, Client as HttpClient, StatusCode};
 use openssl::pkcs12::Pkcs12;
@@ -67,11 +66,7 @@ impl Client {
     /// Create a connection to APNs using the provider client certificate which
     /// you obtain from your [Apple developer
     /// account](https://developer.apple.com/account/).
-    pub fn certificate<R>(
-        certificate: &mut R,
-        password: &str,
-        endpoint: Endpoint,
-    ) -> Result<Client, Error>
+    pub fn certificate<R>(certificate: &mut R, password: &str, endpoint: Endpoint) -> Result<Client, Error>
     where
         R: Read,
     {
@@ -79,10 +74,7 @@ impl Client {
         certificate.read_to_end(&mut cert_der)?;
 
         let pkcs = Pkcs12::from_der(&cert_der)?.parse(password)?;
-        let connector = AlpnConnector::with_client_cert(
-            &pkcs.cert.to_pem()?,
-            &pkcs.pkey.private_key_to_pem_pkcs8()?,
-        )?;
+        let connector = AlpnConnector::with_client_cert(&pkcs.cert.to_pem()?, &pkcs.pkey.private_key_to_pem_pkcs8()?)?;
 
         Ok(Self::new(connector, None, endpoint))
     }
@@ -100,12 +92,7 @@ impl Client {
     /// request with a signature using a private key, key id and team id
     /// provisioned from your [Apple developer
     /// account](https://developer.apple.com/account/).
-    pub fn token<S, T, R>(
-        pkcs8_pem: R,
-        key_id: S,
-        team_id: T,
-        endpoint: Endpoint,
-    ) -> Result<Client, Error>
+    pub fn token<S, T, R>(pkcs8_pem: R, key_id: S, team_id: T, endpoint: Endpoint) -> Result<Client, Error>
     where
         S: Into<String>,
         T: Into<String>,
@@ -121,10 +108,7 @@ impl Client {
     /// Send a notification payload.
     ///
     /// See [ErrorReason](enum.ErrorReason.html) for possible errors.
-    pub fn send(
-        &self,
-        payload: Payload<'_>,
-    ) -> impl Future<Output = Result<Response, Error>> + 'static {
+    pub fn send(&self, payload: Payload<'_>) -> impl Future<Output = Result<Response, Error>> + 'static {
         let request = self.build_request(payload);
         let requesting = self.http_client.request(request);
 
@@ -144,19 +128,7 @@ impl Client {
                     code: response.status().as_u16(),
                 }),
                 status => {
-                    let content_length: usize = response
-                        .headers()
-                        .get(CONTENT_LENGTH)
-                        .and_then(|s| s.to_str().ok())
-                        .and_then(|s| s.parse().ok())
-                        .unwrap_or(0);
-
-                    let mut body: Vec<u8> = Vec::with_capacity(content_length);
-                    let mut chunks = response.into_body();
-
-                    while let Some(chunk) = chunks.next().await {
-                        body.extend_from_slice(&chunk?);
-                    }
+                    let body = hyper::body::to_bytes(response).await?;
 
                     Err(ResponseError(Response {
                         apns_id,
@@ -169,10 +141,7 @@ impl Client {
     }
 
     fn build_request(&self, payload: Payload<'_>) -> hyper::Request<Body> {
-        let path = format!(
-            "https://{}/3/device/{}",
-            self.endpoint, payload.device_token
-        );
+        let path = format!("https://{}/3/device/{}", self.endpoint, payload.device_token);
 
         let mut builder = hyper::Request::builder()
             .uri(&path)
@@ -180,13 +149,13 @@ impl Client {
             .header(CONTENT_TYPE, "application/json");
 
         if let Some(ref apns_priority) = payload.options.apns_priority {
-            builder = builder.header("apns-priority", format!("{}", apns_priority).as_bytes());
+            builder = builder.header("apns-priority", apns_priority.to_string().as_bytes());
         }
         if let Some(apns_id) = payload.options.apns_id {
             builder = builder.header("apns-id", apns_id.as_bytes());
         }
         if let Some(ref apns_expiration) = payload.options.apns_expiration {
-            builder = builder.header("apns-expiration", format!("{}", apns_expiration).as_bytes());
+            builder = builder.header("apns-expiration", apns_expiration.to_string().as_bytes());
         }
         if let Some(ref apns_collapse_id) = payload.options.apns_collapse_id {
             builder = builder.header("apns-collapse-id", apns_collapse_id.value.as_bytes());
@@ -248,10 +217,7 @@ mod tests {
         let request = client.build_request(payload);
         let uri = format!("{}", request.uri());
 
-        assert_eq!(
-            "https://api.development.push.apple.com/3/device/a_test_id",
-            &uri
-        );
+        assert_eq!("https://api.development.push.apple.com/3/device/a_test_id", &uri);
     }
 
     #[test]
@@ -271,10 +237,7 @@ mod tests {
         let client = Client::new(AlpnConnector::new(), None, Endpoint::Production);
         let request = client.build_request(payload);
 
-        assert_eq!(
-            "application/json",
-            request.headers().get(CONTENT_TYPE).unwrap()
-        );
+        assert_eq!("application/json", request.headers().get(CONTENT_TYPE).unwrap());
     }
 
     #[test]
@@ -284,12 +247,7 @@ mod tests {
         let client = Client::new(AlpnConnector::new(), None, Endpoint::Production);
         let request = client.build_request(payload.clone());
         let payload_json = payload.to_json_string().unwrap();
-        let content_length = request
-            .headers()
-            .get(CONTENT_LENGTH)
-            .unwrap()
-            .to_str()
-            .unwrap();
+        let content_length = request.headers().get(CONTENT_LENGTH).unwrap().to_str().unwrap();
 
         assert_eq!(&format!("{}", payload_json.len()), content_length);
     }
@@ -506,13 +464,15 @@ mod tests {
         let client = Client::new(AlpnConnector::new(), None, Endpoint::Production);
         let request = client.build_request(payload.clone());
 
-        let mut body: Vec<u8> = Vec::new();
-        let mut chunks = request.into_body();
+        let body = hyper::body::to_bytes(request).await.unwrap();
+        let body_str = String::from_utf8(body.to_vec()).unwrap();
 
+        /*
         while let Some(chunk) = chunks.next().await {
             body.extend_from_slice(&chunk.unwrap());
         }
         let body_str = String::from_utf8(body).unwrap();
+        // */
 
         assert_eq!(payload.to_json_string().unwrap(), body_str,);
     }
