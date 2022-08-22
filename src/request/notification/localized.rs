@@ -37,7 +37,7 @@ pub struct LocalizedAlert<'a> {
 ///
 /// ```rust
 /// # use a2::request::notification::{LocalizedNotificationBuilder, NotificationBuilder};
-/// let mut builder = LocalizedNotificationBuilder::new();
+/// let mut builder = LocalizedNotificationBuilder::default();
 /// builder.set_title("Hi there");
 /// builder.set_body("What's up?");
 /// builder.set_badge(420);
@@ -66,15 +66,20 @@ pub struct LocalizedNotificationBuilder<'a> {
 impl<'a> LocalizedNotificationBuilder<'a> {
     /// Creates a new builder.
     ///
+    /// This is a convenience function for the very common pattern of providing the
+    /// title and body for a new LocalizedNotification.
+    ///
     /// ```rust
     /// # use a2::request::notification::{LocalizedNotificationBuilder, NotificationBuilder};
+    /// # fn main() {
     /// let payload = LocalizedNotificationBuilder::new("a title", "a body")
     ///     .build("token", Default::default());
     ///
     /// assert_eq!(
-    ///     "{\"aps\":{\"alert\":{\"body\":\"a body\", \"title\":\"a title\"},\"mutable-content\":0}}",
+    ///     "{\"aps\":{\"alert\":{\"body\":\"a body\",\"title\":\"a title\"},\"mutable-content\":0}}",
     ///     &payload.to_json_string().unwrap()
     /// );
+    /// # }
     /// ```
     pub fn new(title: &'a str, body: &'a str) -> LocalizedNotificationBuilder<'a> {
         LocalizedNotificationBuilder {
@@ -91,9 +96,10 @@ impl<'a> LocalizedNotificationBuilder<'a> {
     ///
     /// ```rust
     /// # use a2::request::notification::{LocalizedNotificationBuilder, NotificationBuilder};
-    /// let payload = LocalizedNotificationBuilder::new()
-    ///     .set_title("a title")
-    ///     .build("token", Default::default());
+    /// let payload = LocalizedNotificationBuilder::default();
+    /// let mut builder = LocalizedNotificationBuilder::default();
+    /// builder.set_title("a title");
+    /// let payload = builder.build("token", Default::default());
     ///
     /// assert_eq!(
     ///     "{\"aps\":{\"alert\":{\"title\":\"a title\"},\"mutable-content\":0}}",
@@ -109,14 +115,16 @@ impl<'a> LocalizedNotificationBuilder<'a> {
     ///
     /// ```rust
     /// # use a2::request::notification::{LocalizedNotificationBuilder, NotificationBuilder};
-    /// let payload = LocalizedNotificationBuilder::new()
-    ///     .set_body("a body")
-    ///     .build("token", Default::default());
+    /// # fn main() {
+    /// let mut builder = LocalizedNotificationBuilder::default();
+    /// builder.set_body("a body");
+    /// let payload = builder.build("token", Default::default());
     ///
     /// assert_eq!(
     ///     "{\"aps\":{\"alert\":{\"body\":\"a body\"},\"mutable-content\":0}}",
     ///     &payload.to_json_string().unwrap()
     /// );
+    /// # }
     /// ```
     pub fn set_body(&mut self, body: &'a str) -> &mut Self {
         self.alert.body = Some(body);
@@ -127,7 +135,7 @@ impl<'a> LocalizedNotificationBuilder<'a> {
     ///
     /// ```rust
     /// # use a2::request::notification::{LocalizedNotificationBuilder, NotificationBuilder};
-    /// let mut builder = LocalizedNotificationBuilder::new();
+    /// let mut builder = LocalizedNotificationBuilder::default();
     /// builder.set_badge(4);
     /// let payload = builder.build("token", Default::default());
     ///
@@ -145,7 +153,7 @@ impl<'a> LocalizedNotificationBuilder<'a> {
     ///
     /// ```rust
     /// # use a2::request::notification::{LocalizedNotificationBuilder, NotificationBuilder};
-    /// let mut builder = LocalizedNotificationBuilder::new();
+    /// let mut builder = LocalizedNotificationBuilder::default();
     /// builder.set_sound("ping");
     /// let payload = builder.build("token", Default::default());
     ///
@@ -164,7 +172,7 @@ impl<'a> LocalizedNotificationBuilder<'a> {
     ///
     /// ```rust
     /// # use a2::request::notification::{LocalizedNotificationBuilder, NotificationBuilder};
-    /// let mut builder = LocalizedNotificationBuilder::new();
+    /// let mut builder = LocalizedNotificationBuilder::default();
     /// builder.set_category("cat1");
     /// let payload = builder.build("token", Default::default());
     ///
@@ -182,7 +190,7 @@ impl<'a> LocalizedNotificationBuilder<'a> {
     ///
     /// ```rust
     /// # use a2::request::notification::{LocalizedNotificationBuilder, NotificationBuilder};
-    /// let mut builder = LocalizedNotificationBuilder::new();
+    /// let mut builder = LocalizedNotificationBuilder::default();
     /// builder.set_title_loc_key("play");
     /// let payload = builder.build("token", Default::default());
     ///
@@ -200,7 +208,7 @@ impl<'a> LocalizedNotificationBuilder<'a> {
     ///
     /// ```rust
     /// # use a2::request::notification::{LocalizedNotificationBuilder, NotificationBuilder};
-    /// let mut builder = LocalizedNotificationBuilder::new();
+    /// let mut builder = LocalizedNotificationBuilder::default();
     /// builder.set_title_loc_args(&["foo", "bar"]);
     /// let payload = builder.build("token", Default::default());
     ///
@@ -223,7 +231,7 @@ impl<'a> LocalizedNotificationBuilder<'a> {
     ///
     /// ```rust
     /// # use a2::request::notification::{LocalizedNotificationBuilder, NotificationBuilder};
-    /// let mut builder = LocalizedNotificationBuilder::new();
+    /// let mut builder = LocalizedNotificationBuilder::default();
     /// builder.set_action_loc_key("stop");
     /// let payload = builder.build("token", Default::default());
     ///
@@ -241,12 +249,12 @@ impl<'a> LocalizedNotificationBuilder<'a> {
     ///
     /// ```rust
     /// # use a2::request::notification::{LocalizedNotificationBuilder, NotificationBuilder};
-    /// let mut builder = LocalizedNotificationBuilder::new();
+    /// let mut builder = LocalizedNotificationBuilder::default();
     /// builder.set_loc_key("lol");
     /// let payload = builder.build("token", Default::default());
     ///
     /// assert_eq!(
-    ///     "{\"aps\":{\"alert\":{\"loc-key\":\"lol\",},\"mutable-content\":0}}",
+    ///     "{\"aps\":{\"alert\":{\"loc-key\":\"lol\"},\"mutable-content\":0}}",
     ///     &payload.to_json_string().unwrap()
     /// );
     /// ```
@@ -259,7 +267,7 @@ impl<'a> LocalizedNotificationBuilder<'a> {
     ///
     /// ```rust
     /// # use a2::request::notification::{LocalizedNotificationBuilder, NotificationBuilder};
-    /// let mut builder = LocalizedNotificationBuilder::new();
+    /// let mut builder = LocalizedNotificationBuilder::default();
     /// builder.set_loc_args(&["omg", "foo"]);
     /// let payload = builder.build("token", Default::default());
     ///
@@ -282,7 +290,7 @@ impl<'a> LocalizedNotificationBuilder<'a> {
     ///
     /// ```rust
     /// # use a2::request::notification::{LocalizedNotificationBuilder, NotificationBuilder};
-    /// let mut builder = LocalizedNotificationBuilder::new();
+    /// let mut builder = LocalizedNotificationBuilder::default();
     /// builder.set_launch_image("cat.png");
     /// let payload = builder.build("token", Default::default());
     ///
@@ -300,7 +308,7 @@ impl<'a> LocalizedNotificationBuilder<'a> {
     ///
     /// ```rust
     /// # use a2::request::notification::{LocalizedNotificationBuilder, NotificationBuilder};
-    /// let mut builder = LocalizedNotificationBuilder::new();
+    /// let mut builder = LocalizedNotificationBuilder::default();
     /// builder.set_mutable_content();
     /// let payload = builder.build("token", Default::default());
     ///
