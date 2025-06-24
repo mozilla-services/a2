@@ -1,3 +1,5 @@
+<div style="border:1px solid red;margin 10px;padding 5px;color:red"><b>NOTE</b> This repo was only needed until a fix landed in the original repo. Use that one instead.</div>
+
 # a2
 
 [![CI Status](https://github.com/walletconnect/a2/actions/workflows/ci.yml/badge.svg)](https://github.com/walletconnect/a2/actions/workflows/ci.yml)
